@@ -26,6 +26,7 @@ import org.perl6.nqp.runtime.ThreadContext;
 
 import org.perl6.nqp.sixmodel.SixModelObject;
 
+
 public class JASTCompiler {
     public static JavaClass buildClass(SixModelObject jast, SixModelObject jastNodes, boolean split, ThreadContext tc) {
         try {
@@ -308,6 +309,8 @@ public class JASTCompiler {
             m.visitLabel(afterCatch);
         }
         else if (istype(insn, jastAnnotation, tc) != 0) {
+            String file = getattr_s(insn, jastAnnotation, "$!file", 1, tc);
+            m.visitAttribute(new SourceFilenameAttribute(file));
             int line = (int) getattr_i(insn, jastAnnotation, "$!line", 0, tc);
             Label l = new Label();
             m.visitLabel(l);

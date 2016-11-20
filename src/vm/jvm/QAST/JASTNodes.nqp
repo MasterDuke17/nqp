@@ -29,6 +29,7 @@ class JAST::Class is JAST::Node {
     method super(*@value) { @value ?? ($!super := @value[0]) !! $!super }
     method serialized(*@value) { @value ?? ($!serialized := @value[0]) !! $!serialized }
     method methods() { @!methods }
+    method filename() { $!filename }
     
     method dump() {
         my @dumped;
@@ -390,15 +391,20 @@ class JAST::TryCatch is JAST::Node {
 
 class JAST::Annotation is JAST::Node {
     has int $!line;
+    has str $!file;
     
-    method BUILD(:$line!) {
+    method BUILD(:$line!, :$file!) {
         $!line := $line;
+        $!file := $file;
     }    
     
     method line() { $!line }
+
+    method file() { $!file }
     
     method dump(@dumped) {
-        nqp::push(@dumped, ".line $!line")
+        nqp::push(@dumped, ".line $!line");
+        nqp::push(@dumped, ".file $!file");
     }
 }
 

@@ -4204,8 +4204,10 @@ class QAST::CompilerJAST {
         for @stmts {
             if $_.node && nqp::can($_.node,'orig') {
                 my $node := $_.node;
-                my $line := HLL::Compiler.lineof($node.orig(), $node.from(), :cache(1));            
-                $il.append(JAST::Annotation.new( :line($line) ));
+                my @line_file := HLL::Compiler.linefileof($node.orig(), $node.from(), :cache(1), :directives(1));
+                my $line := @line_file[0];
+                my $file := @line_file[1] || $*JCLASS.filename();
+                $il.append(JAST::Annotation.new( :$line, :$file ));
             }
             
             my $void := $all_void || $i != $resultchild;

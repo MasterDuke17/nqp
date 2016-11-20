@@ -6,6 +6,16 @@ import java.lang.invoke.MethodType;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.objectweb.asm.ClassReader;
+import org.objectweb.asm.ClassWriter;
+import org.objectweb.asm.MethodVisitor;
+import org.objectweb.asm.ClassVisitor;
+import org.objectweb.asm.tree.ClassNode;
+import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.Attribute;
+
+import org.perl6.nqp.jast2bc.SourceFilenameAttribute;
+
 import org.perl6.nqp.sixmodel.SixModelObject;
 import org.perl6.nqp.sixmodel.reprs.VMExceptionInstance;
 
@@ -307,17 +317,44 @@ all:
         while (ncursor != null) {
             StaticCodeInfo info = ncursor.codeRef.staticInfo;
             String kls = info.compUnit.getClass().getName();
-            String method = info.methodName;
+            final String method = info.methodName;
+            final Container filename = null;
 
             while (ex.nativeTrace != null && jcursor < ex.nativeTrace.length && !kls.equals(ex.nativeTrace[jcursor].getClassName()) &&
                         (method == null || !method.equals(ex.nativeTrace[jcursor].getMethodName())))
                 jcursor++;
 
             StackTraceElement el = ex.nativeTrace != null && jcursor < ex.nativeTrace.length ? ex.nativeTrace[jcursor++] : null;
+            try {
+                if (el != null && el.getFileName().equals("gen/jvm/CORE.setting")) {
+                    new ClassReader(info.compUnit.getClass().getClassLoader().getResourceAsStream(kls)).accept(
+                        new ClassVisitor(Opcodes.ASM4) {
+                            @Override
+                            public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
+                                if (!name.equals(method)) {
+                                    return null;
+                                }
+                                return new MethodVisitor(Opcodes.ASM4) {
+                                    @Override
+									public void visitAttribute(Attribute attr) {
+                                        filename.value = attr.type;
+                                    }
+                                };
+                            }
+                        },
+                        0);
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
 
-            result.add(new TraceElement(ncursor, el != null ? el.getFileName() : null, el != null ? el.getLineNumber() : -1));
+            result.add(new TraceElement(ncursor, filename.value != null ? filename.value : el != null ? el.getFileName() : null, el != null ? el.getLineNumber() : -1));
             ncursor = ncursor.caller;
         }
         return result;
+    }
+
+    static class Container {
+        private String value;
     }
 }
