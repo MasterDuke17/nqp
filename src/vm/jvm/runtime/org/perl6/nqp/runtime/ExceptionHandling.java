@@ -5,6 +5,7 @@ import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.util.ArrayList;
 import java.util.List;
+import java.io.InputStream;
 
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
@@ -318,7 +319,7 @@ all:
             StaticCodeInfo info = ncursor.codeRef.staticInfo;
             String kls = info.compUnit.getClass().getName();
             final String method = info.methodName;
-            final Container filename = null;
+            final Container filename = new Container(null);
 
             while (ex.nativeTrace != null && jcursor < ex.nativeTrace.length && !kls.equals(ex.nativeTrace[jcursor].getClassName()) &&
                         (method == null || !method.equals(ex.nativeTrace[jcursor].getMethodName())))
@@ -327,7 +328,7 @@ all:
             StackTraceElement el = ex.nativeTrace != null && jcursor < ex.nativeTrace.length ? ex.nativeTrace[jcursor++] : null;
             try {
                 if (el != null && el.getFileName().equals("gen/jvm/CORE.setting")) {
-                    new ClassReader(info.compUnit.getClass().getClassLoader().getResourceAsStream(kls)).accept(
+                    new ClassReader(info.compUnit.getClass().getResourceAsStream(kls)).accept(
                         new ClassVisitor(Opcodes.ASM4) {
                             @Override
                             public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
@@ -336,8 +337,8 @@ all:
                                 }
                                 return new MethodVisitor(Opcodes.ASM4) {
                                     @Override
-									public void visitAttribute(Attribute attr) {
-                                        filename.value = attr.type;
+                                    public void visitAttribute(Attribute attr) {
+                                        filename.setValue(attr.type);
                                     }
                                 };
                             }
@@ -356,5 +357,17 @@ all:
 
     static class Container {
         private String value;
+
+        Container(String value) {
+            setValue(value);
+        }
+
+        String getValue() {
+            return value;
+        }
+
+        void setValue(String value) {
+            this.value = value;
+        }
     }
 }
