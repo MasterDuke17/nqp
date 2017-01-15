@@ -2484,6 +2484,7 @@ QAST::MASTOperations.add_core_moarop_mapping('ishash', 'ishash', :decont(0));
 QAST::MASTOperations.add_core_moarop_mapping('iterator', 'iter');
 QAST::MASTOperations.add_core_moarop_mapping('iterkey_s', 'iterkey_s');
 QAST::MASTOperations.add_core_moarop_mapping('iterval', 'iterval');
+QAST::MASTOperations.add_core_moarop_mapping('swap_i', 'swap_i');
 
 # object opcodes
 QAST::MASTOperations.add_core_op('null', -> $qastcomp, $op {
