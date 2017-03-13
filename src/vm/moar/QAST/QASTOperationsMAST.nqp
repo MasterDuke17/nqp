@@ -1862,7 +1862,7 @@ sub boxer($kind, $type_op, $op) {
 QAST::MASTOperations.add_hll_box('', $MVM_reg_int64, boxer($MVM_reg_int64, 'hllboxtype_i', 'box_i'));
 QAST::MASTOperations.add_hll_box('', $MVM_reg_num64, boxer($MVM_reg_num64, 'hllboxtype_n', 'box_n'));
 QAST::MASTOperations.add_hll_box('', $MVM_reg_str, boxer($MVM_reg_str, 'hllboxtype_s', 'box_s'));
-QAST::MASTOperations.add_hll_box('', $MVM_reg_uint64, boxer($MVM_reg_uint64, 'hllboxtype_i', 'box_u'));
+QAST::MASTOperations.add_hll_box('', $MVM_reg_uint64, boxer($MVM_reg_uint64, 'hllboxtype_u', 'box_u'));
 QAST::MASTOperations.add_hll_box('', $MVM_reg_void, -> $qastcomp, $reg {
     my $il := nqp::list();
     my $res_reg := $*REGALLOC.fresh_register($MVM_reg_obj);
@@ -2528,6 +2528,7 @@ QAST::MASTOperations.add_core_moarop_mapping('iscont_i', 'iscont_i');
 QAST::MASTOperations.add_core_moarop_mapping('iscont_n', 'iscont_n');
 QAST::MASTOperations.add_core_moarop_mapping('iscont_s', 'iscont_s');
 QAST::MASTOperations.add_core_moarop_mapping('isrwcont', 'isrwcont');
+QAST::MASTOperations.add_core_moarop_mapping('iscont_u', 'iscont_u');
 QAST::MASTOperations.add_core_moarop_mapping('decont', 'decont');
 QAST::MASTOperations.add_core_moarop_mapping('decont_i', 'decont_i');
 QAST::MASTOperations.add_core_moarop_mapping('decont_n', 'decont_n');
@@ -2699,6 +2700,7 @@ sub add_native_assign_op($op_name, $kind) {
 add_native_assign_op('assign_i', $MVM_reg_int64);
 add_native_assign_op('assign_n', $MVM_reg_num64);
 add_native_assign_op('assign_s', $MVM_reg_str);
+add_native_assign_op('assign_u', $MVM_reg_uint64);
 
 QAST::MASTOperations.add_core_moarop_mapping('assignunchecked', 'assignunchecked', 0, :decont(1));
 QAST::MASTOperations.add_core_moarop_mapping('setparameterizer', 'setparameterizer', 0, :decont(0, 1));
@@ -2813,7 +2815,7 @@ QAST::MASTOperations.add_core_op('nativecall', -> $qastcomp, $op {
         my $obj;
         while $i < $n {
             $obj := nqp::atpos(@args, $i);
-            unless nqp::iscont_i($obj) || nqp::iscont_n($obj) || nqp::iscont_s($obj) {
+            unless nqp::iscont_i($obj) || nqp::iscont_n($obj) || nqp::iscont_s($obj) || nqp::iscont_u($obj) {
                 nqp::bindpos(@args, $i, nqp::can($obj, 'cstr')
                     ?? nqp::decont($obj.cstr())
                     !! nqp::decont($obj));
