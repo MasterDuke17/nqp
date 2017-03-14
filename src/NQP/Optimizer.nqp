@@ -307,7 +307,7 @@ class NQP::Optimizer {
                 my $typeinfo := nqp::chars($node.op) >= 2
                                 ?? nqp::substr($node.op, nqp::chars($node.op) - 2, 2)
                                 !! "";
-                if $typeinfo eq "_i" {
+                if $typeinfo eq "_i" || $typeinfo eq "_u" {
                     return 1
                 } elsif $node.op eq 'chars' || $node.op eq 'ord' || $node.op eq 'elems' {
                     return 1

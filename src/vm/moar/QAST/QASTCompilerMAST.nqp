@@ -1611,6 +1611,7 @@ my class MASTCompilerInstance {
             my $lexref;
             my $outer := 0;
             my $block := $*BLOCK;
+			note("ln: $name");
             # find the block where the lexical was declared, if any
             while nqp::istype($block, BlockInfo) {
                 last if $block.qast.ann('DYN_COMP_WRAPPER');
@@ -1623,6 +1624,7 @@ my class MASTCompilerInstance {
             }
             if $lex {
                 $res_kind := $block.lexical_kind($name);
+				note("lrk: $res_kind");
                 if $outer {
                     # need to create lex that knows how many frames to go out
                     $lex := MAST::Lexical.new( :index($lex.index), :frames_out($outer) );
@@ -1630,6 +1632,7 @@ my class MASTCompilerInstance {
                 if $*BINDVAL {
                     my $valmast := self.as_mast_clear_bindval($*BINDVAL, :want($res_kind));
                     $res_reg := $valmast.result_reg;
+				note("B: " ~ $res_reg.dump());
                     push_ilist(@ins, $valmast);
                     push_op(@ins, 'bindlex', $lex, $res_reg);
                 }
@@ -1653,6 +1656,10 @@ my class MASTCompilerInstance {
                     nqp::die('Cannot bind to QAST::Var resolving to a lexicalref');
                 }
                 $res_kind := $block.lexicalref_kind($name);
+				note("name: $name");
+				note("res_kind: $res_kind");
+				note("kind_to_op_slot: " ~ @kind_to_op_slot[$res_kind]);
+				note("decont_opnames: " ~ @decont_opnames[@kind_to_op_slot[$res_kind]]);
                 if $outer {
                     $lexref := MAST::Lexical.new( :index($lexref.index), :frames_out($outer) );
                 }
@@ -2059,7 +2066,7 @@ my class MASTCompilerInstance {
                     elsif $size == 32 { $MVM_reg_uint32 }
                     elsif $size == 16 { $MVM_reg_uint16 }
                     elsif $size == 8  { $MVM_reg_uint8 }
-                    else { nqp::die("Unknown int size $size") }
+                    else { nqp::die("Unknown uint size $size") }
                 }
                 else {
                     if $size == 64    { $MVM_reg_int64 }
