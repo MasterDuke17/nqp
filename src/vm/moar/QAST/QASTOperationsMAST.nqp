@@ -2575,6 +2575,7 @@ sub add_bindattr_op($nqpop, $hintedop, $namedop, $want) {
 
 add_bindattr_op('bindattr',   'bindattr_o', 'bindattrs_o', $MVM_reg_obj);
 add_bindattr_op('bindattr_i', 'bindattr_i', 'bindattrs_i', $MVM_reg_int64);
+add_bindattr_op('bindattr_u', 'bindattr_u', 'bindattrs_u', $MVM_reg_uint64);
 add_bindattr_op('bindattr_n', 'bindattr_n', 'bindattrs_n', $MVM_reg_num64);
 add_bindattr_op('bindattr_s', 'bindattr_s', 'bindattrs_s', $MVM_reg_str);
 
