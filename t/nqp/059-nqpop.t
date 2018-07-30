@@ -363,14 +363,14 @@ ok(nqp::isgt_s('abcdbzefg', 'abcdaz',), 'nqp::isgt_s');
 ok(!nqp::isgt_s('abc', 'abc'), 'nqp::isgt_s - both string equal');
 ok(!nqp::isgt_s('abcdaz', 'abcdbzefg'), 'nqp::isgt_s left string greater');
 
-ok((1.1 != 1) == 1, '!= between floating point numbers (not equal)');
-ok((1.1 != 1.1) == 0,'!= between floating point numbers (equal)');
+ok(nqp::isne_n(1.1, 1) == 1, '!= between floating point numbers (not equal)');
+ok(nqp::isne_n(1.1, 1.1) == 0,'!= between floating point numbers (equal)');
 
-ok(12.5 % 5 == 2.5, '% test');
-ok(3 % 2.5 == 0.5, '% test');
-ok(-12.5 % 5 == 2.5, '% test');
-ok(12.5 % -5 == -2.5, '% test');
-ok(-12.5 % -5 == -2.5, '% test');
+ok(nqp::iseq_n(nqp::mod_n(12.5, 5), 2.5), '% test');
+ok(nqp::iseq_n(nqp::mod_n(3, 2.5), 0.5), '% test');
+ok(nqp::iseq_n(nqp::mod_n(-12.5, 5), 2.5), '% test');
+ok(nqp::iseq_n(nqp::mod_n(12.5, -5), -2.5), '% test');
+ok(nqp::iseq_n(nqp::mod_n(-12.5, -5), -2.5), '% test');
 ok(20 % 7 == 6, '% with integer arguments');
 
 is(nqp::sha1("Hello World"), '0A4D55A8D778E5022FAB701977C5D840BBC486D0', "sha1");
@@ -477,13 +477,13 @@ ok(nqp::isnanorinf(nqp::inf()) == 1, "nqp::isnanorinf - inf");
 ok(nqp::isnanorinf(nqp::neginf()) == 1, "nqp::isnanorinf - neginf");
 ok(nqp::isnanorinf(123.5) == 0, "nqp::isnanorinf - normal number");
 
-ok(nqp::inf() == nqp::inf(), "nqp::inf() equals itself");
-ok(nqp::nan() != nqp::nan(), "nqp::nan() doesn't equal itself");
-ok(nqp::neginf() < 0, "nqp::neginf() is negative");
-ok(nqp::inf() > 0, "nqp::inf() is positive");
-ok(nqp::inf()+123 == nqp::inf()-123, "nqp::inf() doesn't change after adding or substracting");
-ok(nqp::neginf()+123 == nqp::neginf()-123, "nqp::neginf() doesn't change after adding or substracting");
-ok(nqp::neginf() == -nqp::inf(), "nqp::neginf() is negated nqp::inf()");
+ok(nqp::iseq_n(nqp::inf(), nqp::inf()), "nqp::inf() equals itself");
+ok(nqp::isne_n(nqp::nan(), nqp::nan()), "nqp::nan() doesn't equal itself");
+ok(nqp::islt_n(nqp::neginf(), 0), "nqp::neginf() is negative");
+ok(nqp::isgt_n(nqp::inf(), 0), "nqp::inf() is positive");
+ok(nqp::iseq_n(nqp::add_n(nqp::inf(), 123), nqp::sub_n(nqp::inf(), 123)), "nqp::inf() doesn't change after adding or substracting");
+ok(nqp::iseq_n(nqp::add_n(nqp::neginf(), 123), nqp::sub_n(nqp::neginf(), 123)), "nqp::neginf() doesn't change after adding or substracting");
+ok(nqp::iseq_n(nqp::neginf(), nqp::neg_n(nqp::inf())), "nqp::neginf() is negated nqp::inf()");
 
 my $n := nqp::rand_n(4);
 ok($n >= 0 && $n < 4, "generating number before calling srand");

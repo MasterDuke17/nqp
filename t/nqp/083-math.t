@@ -2,12 +2,12 @@ plan(63);
 
 # Basic tests for a bunch of mathematical functions
 
-my $log_5 := 940945/584642;
-my $log_one_tenth := -254834/110673;
+my $log_5 := nqp::div_n(940945, 584642);
+my $log_one_tenth := nqp::div_n(-254834, 110673);
 
 sub is_approx($got, $expected, $descr =  "$got is approximately $expected") {
-    my $tol := nqp::abs_n($expected) < 1e-6 ?? 1e-5 !! nqp::abs_n($expected) * 1e-6;
-    my $test := nqp::abs_n($got - $expected) <= $tol;
+    my $tol  := nqp::islt_n(nqp::abs_n($expected), 1e-6) ?? 1e-5 !! nqp::mul_n(nqp::abs_n($expected), 1e-6);
+    my $test := nqp::isle_n(nqp::abs_n(nqp::sub_n($got, $expected)), $tol);
     ok(?$test, $descr);
     unless $test {
         say("#got:      $got");
@@ -33,7 +33,7 @@ is_approx(nqp::cos_n(3), -0.989992496600445, "nqp::cos_n(3)");
 is_approx(nqp::cos_n(4), -0.653643620863612, "nqp::cos_n(4)");
 
 my sub isnan($n) {
-    nqp::isnanorinf($n) && $n != nqp::inf() && $n != nqp::neginf();
+    nqp::isnanorinf($n) && nqp::isne_n($n, nqp::inf()) && nqp::isne_n($n, nqp::neginf());
 }
 
 ok(isnan(nqp::cos_n(nqp::neginf)) , "nqp::cos_n(nqp::neginf)");

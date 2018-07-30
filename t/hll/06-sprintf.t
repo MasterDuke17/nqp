@@ -51,7 +51,7 @@ my class SprintfHandler {
 my $knowhow := nqp::knowhow().new_type(:name('TestBigInt'), :repr("P6bigint"));
 nqp::sprintfaddargumenthandler(SprintfHandler.new);
 my $large-positive-int := nqp::pow_I(nqp::box_i(33, $knowhow), nqp::box_i(21, $knowhow), $knowhow, $knowhow);
-# my $large-negative-int := fromnum_I(-nqp::pow_n(2.42, 42), $knowhow);
+# my $large-negative-int := fromnum_I(nqp::neg_n(nqp::pow_n(2.42, 42)), $knowhow);
 
 
 is(nqp::sprintf('<%6s>', [12]), '<    12>', 'right-justified %s with space padding');
