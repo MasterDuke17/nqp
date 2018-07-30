@@ -601,6 +601,9 @@ QAST::MASTOperations.add_core_op('list_b', -> $qastcomp, $op {
 QAST::MASTOperations.add_core_op('numify', -> $qastcomp, $op {
     $qastcomp.as_mast($op[0], :want($MVM_reg_num64))
 });
+QAST::MASTOperations.add_core_op('intify', -> $qastcomp, $op {
+    $qastcomp.as_mast($op[0], :want($MVM_reg_int64))
+});
 QAST::MASTOperations.add_core_op('qlist', -> $qastcomp, $op {
     $qastcomp.as_mast(QAST::Op.new( :op('list'), |@($op) ))
 });
@@ -1853,16 +1856,13 @@ QAST::MASTOperations.add_core_op('control', -> $qastcomp, $op {
 QAST::MASTOperations.add_hll_unbox('', $MVM_reg_int64, -> $qastcomp, $reg {
     my $regalloc := $*REGALLOC;
     my $il := nqp::list();
-    my $a := $regalloc.fresh_register($MVM_reg_num64);
-    my $b := $regalloc.fresh_register($MVM_reg_int64);
+    my $res_reg := $regalloc.fresh_register($MVM_reg_int64);
     $regalloc.release_register($reg, $MVM_reg_obj);
     my $dc := $regalloc.fresh_register($MVM_reg_obj);
     push_op($il, 'decont', $dc, $reg);
-    push_op($il, 'smrt_numify', $a, $dc);
-    push_op($il, 'coerce_ni', $b, $a);
-    $regalloc.release_register($a, $MVM_reg_num64);
+    push_op($il, 'smrt_intify', $res_reg, $dc);
     $regalloc.release_register($dc, $MVM_reg_obj);
-    MAST::InstructionList.new($il, $b, $MVM_reg_int64)
+    MAST::InstructionList.new($il, $res_reg, $MVM_reg_int64)
 });
 QAST::MASTOperations.add_hll_unbox('', $MVM_reg_num64, -> $qastcomp, $reg {
     my $regalloc := $*REGALLOC;

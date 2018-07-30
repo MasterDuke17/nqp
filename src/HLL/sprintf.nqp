@@ -130,9 +130,11 @@ my module sprintf {
             if nqp::isint($number_representation) {
                 nqp::box_i($number_representation, $knowhow);
             } else {
-                if nqp::isnum($number_representation)
-                || nqp::isstr($number_representation) {
-                    if $number_representation > 0 {
+                if nqp::isstr($number_representation) {
+                    $number_representation := nqp::numify($number_representation);
+                }
+                if nqp::isnum($number_representation) {
+                    if nqp::isgt_n($number_representation, 0) {
                         nqp::fromnum_I(nqp::floor_n($number_representation), $knowhow);
                     }
                     else {
@@ -318,10 +320,10 @@ my module sprintf {
         }
 
         sub stringify-to-precision2($float, $precision) {
-            my $exp := $float == 0.0 ?? 0 !! nqp::floor_n(nqp::log_n($float) / nqp::log_n(10));
-            $float := nqp::abs_n($float) * nqp::pow_n(10, $precision - ($exp + 1)) + 0.5;
+            my $exp := nqp::iseq_n($float, 0.0) ?? 0 !! nqp::floor_n(nqp::div_n(nqp::log_n($float), nqp::log_n(10)));
+            $float := nqp::add_n(nqp::mul_n(nqp::abs_n($float), nqp::pow_n(10, nqp::sub_n($precision, nqp::add_n($exp, 1)))), 0.5);
             $float := nqp::floor_n($float);
-            $float := $float / nqp::pow_n(10, $precision - ($exp + 1));
+            $float := nqp::div_n($float, nqp::pow_n(10, nqp::sub_n($precision, nqp::add_n($exp, 1))));
 #?if jvm
             if $exp == -4 {
                 $float := stringify-to-precision($float, $precision + 3);
@@ -333,8 +335,8 @@ my module sprintf {
         }
         sub fixed-point($float, $precision, $size, $pad, $/) {
             # if we have zero; handle its sign: 1/0e0 == +Inf, 1/-0e0 == -Inf
-            my $sign := $float < 0
-                || ( $float == 0 && nqp::islt_n(nqp::div_n(1e0,$float), 0e0) )
+            my $sign := nqp::islt_n($float, 0)
+                || ( nqp::iseq_n($float, 0) && nqp::islt_n(nqp::div_n(1e0,$float), 0e0) )
                 ?? '-'
                      !! has_flag($/, 'plus') ?? '+'
                      !! has_flag($/, 'space') ?? ' '
@@ -345,15 +347,15 @@ my module sprintf {
         }
         sub scientific($float, $e, $precision, $size, $pad, $/) {
             # if we have zero; handle its sign: 1/0e0 == +Inf, 1/-0e0 == -Inf
-            my $sign := $float < 0
-                || ( $float == 0 && nqp::islt_n(nqp::div_n(1e0,$float), 0e0) )
+            my $sign := nqp::islt_n($float, 0)
+                || ( nqp::iseq_n($float, 0) && nqp::islt_n(nqp::div_n(1e0,$float), 0e0) )
                 ?? '-'
                      !! has_flag($/, 'plus') ?? '+'
                      !! has_flag($/, 'space') ?? ' '
                      !! '';
             $float := nqp::abs_n($float);
             unless nqp::isnanorinf($float) {
-                my $exp := $float == 0.0 ?? 0 !! nqp::floor_n(nqp::log_n($float) / nqp::log_n(10));
+                my $exp := nqp::iseq_n($float, 0.0) ?? 0 !! nqp::floor_n(nqp::div_n(nqp::log_n($float), nqp::log_n(10)));
                 $float := $float / nqp::pow_n(10, $exp);
                 $float := stringify-to-precision($float, $precision);
                 if $exp < 0 {
@@ -367,8 +369,8 @@ my module sprintf {
         }
         sub shortest($float, $e, $precision, $size, $pad, $/) {
             # if we have zero; handle its sign: 1/0e0 == +Inf, 1/-0e0 == -Inf
-            my $sign := $float < 0
-                || ( $float == 0 && nqp::islt_n(nqp::div_n(1e0,$float), 0e0) )
+            my $sign := nqp::islt_n($float, 0)
+                || ( nqp::iseq_n($float, 0) && nqp::islt_n(nqp::div_n(1e0,$float), 0e0) )
                 ?? '-'
                      !! has_flag($/, 'plus') ?? '+'
                      !! has_flag($/, 'space') ?? ' '
@@ -377,14 +379,14 @@ my module sprintf {
 
             return pad-with-sign($sign, $float, $size, $pad) if nqp::isnanorinf($float);
 
-            my $exp := $float == 0.0 ?? 0 !! nqp::floor_n(nqp::log_n($float) / nqp::log_n(10));
+            my $exp := nqp::iseq_n($float, 0.0) ?? 0 !! nqp::floor_n(nqp::div_n(nqp::log_n($float), nqp::log_n(10)));
 
             if -2 - $precision < $exp && $exp < $precision {
                 my $fixed-precision := $precision - ($exp + 1);
                 my $fixed := stringify-to-precision2($float, $precision);
                 pad-with-sign($sign, $fixed, $size, $pad);
             } else {
-                $float := $float / nqp::pow_n(10, $exp);
+                $float := nqp::div_n($float, nqp::pow_n(10, $exp));
                 $float := stringify-to-precision2($float, $precision);
                 my $sci;
                 if $exp < 0 {
