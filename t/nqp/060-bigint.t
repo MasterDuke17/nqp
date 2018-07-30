@@ -174,7 +174,7 @@ ok(nqp::iseq_n(nqp::tonum_I($big), nqp::mul_n($factor, nqp::pow_n(-2, 101))), "$
 
 $big := 1e16;
 my $converted := nqp::tonum_I(nqp::fromstr_I('10000000000000000', $bi_type));
-ok(nqp::abs_n($big - $converted) / $big < 1e-4, 'bigint -> float, 1e16');
+ok(nqp::islt_n(nqp::div_n(nqp::abs_n(nqp::sub_n($big, $converted)), $big), 1e-4), 'bigint -> float, 1e16');
 
 my $float := 123456789e240;
 ok(nqp::iseq_n($float, nqp::tonum_I(nqp::fromnum_I($float, $bi_type))),
@@ -224,7 +224,7 @@ ok(nqp::div_In(box(-1), box(5)) == -0.2, 'div_In -1 by 5');
 ok(nqp::div_In(box(-1), box(20)) == -0.05, 'div_In -1 by 20');
 ok(nqp::div_In(box(1), box(-200)) == -0.005, 'div_In 1 by -20');
 
-ok(nqp::abs_n($n - 19.6430286394751) < 1e-10, 'div_In with big numbers');
+ok(nqp::islt_n(nqp::abs_n(nqp::sub_n($n, 19.6430286394751)), 1e-10), 'div_In with big numbers');
 
 my $maxRand := nqp::fromstr_I('10000000000000000000000000000000000000000', $bi_type);
 my $rand := nqp::rand_I($maxRand, $bi_type); 
@@ -265,7 +265,7 @@ ok(nqp::div_In(box(-12), box(0)) == nqp::neginf(), 'nqp::div_In -12/0 = -Inf');
 ok(nqp::div_In(box(12), box(0)) == nqp::inf(), 'nqp::div_In 12/0 == Inf');
 
 my sub isnan($n) {
-    nqp::isnanorinf($n) && $n != nqp::inf() && $n != nqp::neginf();
+    nqp::isnanorinf($n) && nqp::isne_n($n, nqp::inf()) && nqp::isne_n($n, nqp::neginf());
 }
 
 ok(isnan(nqp::div_In(box(0), box(0))), 'nqp::div_In 0/0 == NaN');

@@ -1881,7 +1881,7 @@ test_qast_result(
         :name('$!value'), :type(num), :box_target(1)
     ));
     $num_boxer.HOW.add_parent($num_boxer, NQPMu);
-    $num_boxer.HOW.add_method($num_boxer, 'twice', method () {~(nqp::getattr_n(self, $num_boxer, '$!value')*2)});
+    $num_boxer.HOW.add_method($num_boxer, 'twice', method () {~(nqp::mul_n(nqp::getattr_n(self, $num_boxer, '$!value'), 2))});
     $num_boxer.HOW.compose($num_boxer);
 
     my $str_boxer := NQPClassHOW.new_type(:name('boxing_str'), :repr('P6opaque'));

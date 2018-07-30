@@ -3,7 +3,7 @@ plan(14 + 3*300);
 # Precision and value drift tests for floating point numerics
 
 sub is ($got, $expected, $desc = "$got is exactly equal to $expected") {
-    ok(?(my $test := $got == $expected), $desc);
+    ok(?(my $test := nqp::iseq_n($got, $expected)), $desc);
     unless $test {
         say("# got:      $got");
         say("# expected: $expected");
@@ -12,7 +12,7 @@ sub is ($got, $expected, $desc = "$got is exactly equal to $expected") {
 }
 
 sub isn't ($got, $expected, $desc = "$got is NOT equal to $expected") {
-    ok(?(my $test := $got != $expected), $desc);
+    ok(?(my $test := nqp::isne_n($got, $expected)), $desc);
     unless $test {
         say("# got value: $got");
         say("# had value: $expected");
