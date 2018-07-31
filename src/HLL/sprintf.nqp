@@ -356,13 +356,13 @@ my module sprintf {
             $float := nqp::abs_n($float);
             unless nqp::isnanorinf($float) {
                 my $exp := nqp::iseq_n($float, 0.0) ?? 0 !! nqp::floor_n(nqp::div_n(nqp::log_n($float), nqp::log_n(10)));
-                $float := $float / nqp::pow_n(10, $exp);
+                $float := nqp::div_n($float, nqp::pow_n(10, $exp));
                 $float := stringify-to-precision($float, $precision);
-                if $exp < 0 {
+                if nqp::islt_n($exp, 0) {
                     $exp := -$exp;
-                    $float := $float ~ $e ~ '-' ~ ($exp < 10 ?? '0' !! '') ~ $exp;
+                    $float := $float ~ $e ~ '-' ~ (nqp::islt_n($exp, 10) ?? '0' !! '') ~ $exp;
                 } else {
-                    $float := $float ~ $e ~ '+' ~ ($exp < 10 ?? '0' !! '') ~ $exp;
+                    $float := $float ~ $e ~ '+' ~ (nqp::islt_n($exp, 10) ?? '0' !! '') ~ $exp;
                 }
             }
             pad-with-sign($sign, $float, $size, $pad);
