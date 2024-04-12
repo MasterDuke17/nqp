@@ -54,8 +54,10 @@ import java.security.NoSuchAlgorithmException;
 import java.text.Normalizer;
 import java.util.AbstractMap;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
@@ -6736,6 +6738,7 @@ public final class Ops {
             }
         }
 
+        NFA.sort_states_and_add_synth_cp_node(tc, nfa);
         return nfa;
     }
 
@@ -6775,6 +6778,34 @@ public final class Ops {
         }
 
         return nfa;
+    }
+
+    private static class edgeListComp implements Comparator<NFAStateInfo> {
+        private int classify_edge(NFAStateInfo e) {
+            switch (e.act) {
+            case NFA.EDGE_SYNTH_CP_COUNT:
+                return 0;
+            case NFA.EDGE_CODEPOINT:
+            case NFA.EDGE_CODEPOINT_LL:
+                return 1;
+            default:
+                return 2;
+            }
+        }
+        public int compare(NFAStateInfo a, NFAStateInfo b) {
+            int type_a = classify_edge(a);
+            int type_b = classify_edge(b);
+            if (type_a < type_b)
+                return -1;
+            if (type_a > type_b)
+                return 1;
+            if (type_a == 1)
+                return a.arg_i < b.arg_i ? -1 :
+                       a.arg_i > b.arg_i ?  1 :
+                                            0;
+            else
+                return 0;
+        }
     }
 
     /* The NFA evaluator. */
@@ -6954,6 +6985,37 @@ public final class Ops {
                             if (ord < lc_arg || ord > uc_arg)
                                 nextst.add(to);
                             continue;
+                        }
+                        case NFA.EDGE_SUBRULE: {
+                            System.err.println("ignoring a subrule!");
+                            continue;
+                        }
+                        case NFA.EDGE_SYNTH_CP_COUNT: {
+                            char ord = target.charAt((int)pos);
+                            int num_possibilities = edgeInfo[i].arg_i;
+                            NFAStateInfo toFind = new NFAStateInfo();
+                            toFind.arg_i = ord;
+                            //int found = Arrays.binarySearch(edgeInfo, toFind, new edgeListComp());
+                            int found = Arrays.binarySearch(edgeInfo, toFind, Comparator.comparingInt(NFAStateInfo::getArg));
+                            if (found < 0)
+                                i += num_possibilities;
+                            else {
+                                while (found <= num_possibilities && edgeInfo[found].arg_i == ord) {
+                                    to = edgeInfo[found].to;
+                                    if (edgeInfo[found].act == NFA.EDGE_CODEPOINT)
+                                        nextst.add(to);
+                                    else {
+                                        nextst.add(to);
+                                        int fate = (edgeInfo[found].act >> 8) & 0xfffff;
+                                        while (usedlonglit <= fate)
+                                            longlit[usedlonglit++] = 0;
+                                        longlit[fate] = pos - orig_pos + 1;
+                                    }
+                                    found++;
+                                }
+                                i += num_possibilities;
+                            }
+                            break;
                         }
                     }
                 }

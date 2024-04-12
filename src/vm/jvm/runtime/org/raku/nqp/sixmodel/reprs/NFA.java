@@ -1,5 +1,8 @@
 package org.raku.nqp.sixmodel.reprs;
 
+import java.util.Arrays;
+import java.util.Comparator;
+
 import org.raku.nqp.runtime.ThreadContext;
 import org.raku.nqp.sixmodel.REPR;
 import org.raku.nqp.sixmodel.STable;
@@ -18,6 +21,7 @@ public class NFA extends REPR {
     public static final int EDGE_CHARCLASS_NEG    = 5;
     public static final int EDGE_CHARLIST         = 6;
     public static final int EDGE_CHARLIST_NEG     = 7;
+    public static final int EDGE_SUBRULE          = 8;
     public static final int EDGE_CODEPOINT_I      = 9;
     public static final int EDGE_CODEPOINT_I_NEG  = 10;
     public static final int EDGE_GENERIC_VAR      = 11;
@@ -31,6 +35,7 @@ public class NFA extends REPR {
     public static final int EDGE_CODEPOINT_IM     = 19;
     public static final int EDGE_CODEPOINT_IM_NEG = 20;
     public static final int EDGE_CODEPOINT_IM_LL  = 21;
+    public static final int EDGE_SYNTH_CP_COUNT   = 64;
 
     @Override
     public SixModelObject type_object_for(ThreadContext tc, SixModelObject HOW) {
@@ -53,6 +58,60 @@ public class NFA extends REPR {
         NFAInstance stub = new NFAInstance();
         stub.st = st;
         return stub;
+    }
+
+    private static class optEdgeComp implements Comparator<NFAStateInfo> {
+        private int classify_edge(NFAStateInfo e) {
+            switch (e.act) {
+            case EDGE_SYNTH_CP_COUNT:
+                return 0;
+            case EDGE_CODEPOINT:
+            case EDGE_CODEPOINT_LL:
+                return 1;
+            default:
+                return 2;
+            }
+        }
+
+        public int compare(NFAStateInfo a, NFAStateInfo b) {
+            int type_a = classify_edge(a);
+            int type_b = classify_edge(b);
+            if (type_a < type_b)
+                return -1;
+            if (type_a > type_b)
+                return 1;
+            if (type_a == 1)
+                return a.arg_i < b.arg_i ? -1 :
+                       a.arg_i > b.arg_i ?  1 :
+                                            0;
+            else
+                return 0;
+        }
+    }
+
+    public static void sort_states_and_add_synth_cp_node(ThreadContext tc, NFAInstance body) {
+        for (int s = 0; s < body.numStates; s++) {
+            int applicable_edges = 0;
+            int num_orig_edges = body.states[s].length;
+            if (num_orig_edges >= 4) {
+                for (int e = 0; e < num_orig_edges; e++) {
+                    int act = body.states[s][e].act;
+                    if (act == EDGE_CODEPOINT || act == EDGE_CODEPOINT_LL)
+                        applicable_edges++;
+                }
+            }
+
+            if (applicable_edges >= 4) {
+                int num_new_edges = num_orig_edges + 1;
+                NFAStateInfo[] new_edges = new NFAStateInfo[num_new_edges];
+                new_edges[0] = new NFAStateInfo();
+                new_edges[0].act = EDGE_SYNTH_CP_COUNT;
+                new_edges[0].arg_i = applicable_edges;
+                System.arraycopy(body.states[s], 0, new_edges, 1, num_orig_edges);
+                Arrays.sort(new_edges, 0, num_new_edges, new optEdgeComp());
+                body.states[s] = new_edges;
+            }
+        }
     }
 
     @Override
@@ -107,6 +166,8 @@ public class NFA extends REPR {
                 }
             }
         }
+
+        sort_states_and_add_synth_cp_node(tc, body);
     }
 
     @Override
@@ -126,9 +187,12 @@ public class NFA extends REPR {
         /* Write state graph. */
         for (int i = 0; i < body.numStates; i++) {
             for (int j = 0; j < body.states[i].length; j++) {
-                writer.writeInt(body.states[i][j].act);
+                int act = body.states[i][j].act;
+                if (act == EDGE_SYNTH_CP_COUNT)
+                    continue;
+                writer.writeInt(act);
                 writer.writeInt(body.states[i][j].to);
-                switch (body.states[i][j].act & 0xff) {
+                switch (act & 0xff) {
                 case EDGE_FATE:
                 case EDGE_CODEPOINT_LL:
                 case EDGE_CODEPOINT:

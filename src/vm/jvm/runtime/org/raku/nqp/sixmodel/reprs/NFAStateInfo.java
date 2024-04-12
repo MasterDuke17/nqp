@@ -7,4 +7,7 @@ public class NFAStateInfo {
     public String arg_s;
     public char arg_uc;
     public char arg_lc;
+    public int getArg() {
+        return arg_i;
+    }
 }
