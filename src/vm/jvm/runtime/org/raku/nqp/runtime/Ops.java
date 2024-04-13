@@ -6808,10 +6808,19 @@ public final class Ops {
         }
     }
 
+    /* Does a run of the NFA. Produces a list of integers indicating the
+     * chosen ordering. */
+    static boolean in_done(int[] done, int numdone, int st) {
+        for (int i = 0; i < numdone; i++)
+            if (done[i] == st)
+                return true;
+        return false;
+    }
+
     /* The NFA evaluator. */
     private static int[] runNFA(ThreadContext tc, NFAInstance nfa, String target, long pos) {
         int eos = target.length();
-        int gen = 1;
+        int numdone = 0;
 
         /* Allocate a "done states" array. */
         int numStates = nfa.numStates;
@@ -6839,6 +6848,7 @@ public final class Ops {
             curst = nextst;
             temp.clear();
             nextst = temp;
+            numdone = 0;
 
             /* Save how many fates we have before this position is considered. */
             int prevFates = fates.size();
@@ -6846,9 +6856,9 @@ public final class Ops {
             while (!curst.isEmpty()) {
                 int st = curst.popInt();
                 if (st <= numStates) {
-                    if (done[st] == gen)
+                    if (in_done(done, numdone, st))
                         continue;
-                    done[st] = gen;
+                    done[numdone++] = st;
                 }
 
                 NFAStateInfo[] edgeInfo = nfa.states[st - 1];
@@ -6877,13 +6887,11 @@ public final class Ops {
                             }
                             if (arg < usedlonglit)
                                 arg -= longlit[arg] << 24;
-                            if (foundFate)
-                                fates.set(fates.size() - 1, arg);
-                            else
-                                fates.add(arg);
+                            fates.sort(IntComparators.NATURAL_COMPARATOR);
+                            fates.add(arg);
                             continue;
                         }
-                        else if (act == NFA.EDGE_EPSILON && to <= numStates && done[to] != gen) {
+                        else if (act == NFA.EDGE_EPSILON && to <= numStates && !in_done(done, numdone, to)) {
                             if (to != 0)
                                 curst.add(to);
                             continue;
@@ -7023,7 +7031,6 @@ public final class Ops {
 
             /* Move to next character and generation. */
             pos++;
-            gen++;
 
             /* If we got multiple fates at this offset, sort them by the
              * declaration order (represented by the fate number). In the
