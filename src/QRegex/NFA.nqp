@@ -40,6 +40,23 @@ class QRegex::NFA {
       'n', nqp::const::CCLASS_NEWLINE
     );
 
+    # Mapping of character class method name to the charclass constants
+    # of the one character it consumes
+    my %cclass_method := nqp::hash(
+      'alnum',  nqp::list(nqp::const::CCLASS_WORD),
+      'upper',  nqp::list(nqp::const::CCLASS_UPPERCASE),
+      'lower',  nqp::list(nqp::const::CCLASS_LOWERCASE),
+      'digit',  nqp::list(nqp::const::CCLASS_NUMERIC),
+      'xdigit', nqp::list(nqp::const::CCLASS_HEXADECIMAL),
+      'space',  nqp::list(nqp::const::CCLASS_WHITESPACE),
+      'blank',  nqp::list(nqp::const::CCLASS_BLANK),
+      'print',  nqp::list(nqp::const::CCLASS_PRINTING),
+      'cntrl',  nqp::list(nqp::const::CCLASS_CONTROL),
+      'punct',  nqp::list(nqp::const::CCLASS_PUNCTUATION),
+      'graph',  nqp::list(nqp::const::CCLASS_ALPHANUMERIC,
+                          nqp::const::CCLASS_PUNCTUATION)
+    );
+
 # DEBUGGING HELPERS, uncomment to activate
 #    my $nfadeb := nqp::existskey(nqp::getenvhash(),'NQP_NFA_DEB');
 #    my int $ind;
@@ -906,6 +923,21 @@ class QRegex::NFA {
                               nqp::const::EDGE_SUBRULE, nqp::atpos($rxnames, $i)
                             );
                             ++$i;
+                        }
+                        @substates := $nfa.states;
+                    }
+                }
+
+                # The cursor's character class methods have no NFA, but
+                # the one character each consumes is a declarative prefix.
+                # A regex overriding one keeps its own NFA, while a plain
+                # method overriding one is taken to match the same class.
+                unless @substates || nqp::isconcrete($nfa_method) {
+                    my $cclasses := nqp::atkey(%cclass_method, $rule);
+                    unless nqp::isnull($cclasses) {
+                        my $nfa := QRegex::NFA.new;
+                        for $cclasses {
+                            $nfa.addedge(1, 0, nqp::const::EDGE_CHARCLASS, $_);
                         }
                         @substates := $nfa.states;
                     }
